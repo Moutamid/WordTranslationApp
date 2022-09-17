@@ -32,13 +32,15 @@ public class MainActivity extends AppCompatActivity {
     private TextView dueTxt,newCardTxt,homeTxt,keywordTxt;
     TextView textView1,textView2,textView3,textView4,textView5;
     private SqlDb db;
-    private int i;
+    private int i=1;
+    private SharedPreferencesManager manager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         db = new SqlDb(this);
+        manager = new SharedPreferencesManager(this);
         btnRecognize = findViewById(R.id.buttonRecognize);
         btnClear = findViewById(R.id.buttonClear);
         drawView = findViewById(R.id.draw_view);
@@ -58,9 +60,10 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(MainActivity.this,SplashScreen.class));
             }
         });
-        i = getIntent().getIntExtra("number",1);
+      //  i = getIntent().getIntExtra("number",1);
         getDueNumber();
-        getKeyword();
+        getKeywordId();
+      //  getKeyword();
         StrokeManager.download();
         textView1.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -140,6 +143,26 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void getKeywordId() {
+        Calendar calendar = Calendar.getInstance();
+        int y = calendar.get(Calendar.YEAR);
+        int d = calendar.get(Calendar.DAY_OF_MONTH);
+        int m = calendar.get(Calendar.MONTH) + 1;
+        String date = d+"/"+m+"/"+y;
+        List<WordsModel> wordsModelArrayList = db.getAllCardInfo(date);
+        if (wordsModelArrayList.size() >= 1){
+            WordsModel model = db.getCurrentCardId(date);
+            i = model.getNo();
+            keywordTxt.setText(model.getWord());
+        }else {
+            manager.storeString("status","done");
+            Intent intent = new Intent(MainActivity.this,SplashScreen.class);
+            startActivity(intent);
+            finish();
+        }
+   //     Toast.makeText(MainActivity.this, "" + i, Toast.LENGTH_SHORT).show();
+    }
+
     private void getKeyword() {
         List<WordsModel> wordsModelArrayList = db.getAllCard();
         List<WordsModel> modelList = new ArrayList<>();
@@ -148,23 +171,35 @@ public class MainActivity extends AppCompatActivity {
         int d = calendar.get(Calendar.DAY_OF_MONTH);
         int m = calendar.get(Calendar.MONTH) + 1;
         String date = d+"/"+m+"/"+y;
+        int pred = calendar.get(Calendar.DAY_OF_MONTH)-1;
+        String pre = pred+"/"+m+"/"+y;
 
         for (int i = 0 ; i < wordsModelArrayList.size(); i++){
             WordsModel model = wordsModelArrayList.get(i);
             if(model.getTimestamp().equals(date)){
-             //   if (!model.isSeen()){
+                if (!model.isSeen() && model.getInterval() == 1){
                     modelList.add(model);
-               // }
+                    //i = model.getNo();
+                }
+
             }
+            else if(model.getTimestamp().equals(pre)){
+                if (!model.isSeen() && model.getInterval() == 1){
+                    modelList.add(model);
+                }
+            }
+
         }
-      //  Toast.makeText(MainActivity.this, ""+ modelList.size(), Toast.LENGTH_SHORT).show();
-        if (i <= modelList.size()) {
+      //  Toast.makeText(MainActivity.this, ""+ i, Toast.LENGTH_SHORT).show();
+        if (modelList.size() >=1) {
             WordsModel model = db.getCard(i);
             keywordTxt.setText(model.getWord());
         }else {
-            Toast.makeText(this, "Empty", Toast.LENGTH_SHORT).show();
+            manager.storeString("status","done");
+            Intent intent = new Intent(MainActivity.this,SplashScreen.class);
+            startActivity(intent);
+            finish();
         }
-
     }
 
     private void getDueNumber() {

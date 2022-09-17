@@ -29,7 +29,7 @@ import jxl.read.biff.BiffException;
 public class ResultScreen extends AppCompatActivity {
 
     AppCompatButton easyBtn, mediumBtn,hardBtn,nextBtn;
-    private TextView resultTxt,txtView;
+    private TextView resultTxt,selectedValue,correctValue;
     private TextView dueTxt,newCardTxt,homeTxt;
     private LinearLayout correctLayout,incorrectLayout;
     private String letter ="";
@@ -49,7 +49,8 @@ public class ResultScreen extends AppCompatActivity {
         hardBtn = findViewById(R.id.hard);
         nextBtn = findViewById(R.id.next);
         resultTxt = findViewById(R.id.result);
-        txtView = findViewById(R.id.textView);
+        selectedValue = findViewById(R.id.textView);
+        correctValue = findViewById(R.id.textView1);
         dueTxt = findViewById(R.id.due);
         keywordTxt = findViewById(R.id.keyword);
         newCardTxt = findViewById(R.id.card);
@@ -60,11 +61,12 @@ public class ResultScreen extends AppCompatActivity {
         letter = getIntent().getStringExtra("letter");
         i = getIntent().getIntExtra("number",1);
         id = db.getCardId(letter);
+      //  checkInterval();
      //   readLetter(letter);
         matchLetter();
         getDueNumber();
         getKeyword();
-        txtView.setText(letter);
+        selectedValue.setText("You selected: " + letter);
         homeTxt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -75,7 +77,7 @@ public class ResultScreen extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent =new Intent(ResultScreen.this,MainActivity.class);
-                intent.putExtra("number",i);
+              //  intent.putExtra("number",i);
                 startActivity(intent);
 
             }
@@ -92,7 +94,7 @@ public class ResultScreen extends AppCompatActivity {
                 db.updatePicture(id,true,date,interval);
                 Toast.makeText(ResultScreen.this, "Easy", Toast.LENGTH_SHORT).show();
                 Intent intent =new Intent(ResultScreen.this,MainActivity.class);
-                intent.putExtra("number",i+1);
+                //intent.putExtra("number",i+1);
                 startActivity(intent);
 
             }
@@ -109,7 +111,7 @@ public class ResultScreen extends AppCompatActivity {
                 db.updatePicture(id,true,date,interval);
                 Toast.makeText(ResultScreen.this, "Medium", Toast.LENGTH_SHORT).show();
                 Intent intent =new Intent(ResultScreen.this,MainActivity.class);
-                intent.putExtra("number",i+1);
+                //intent.putExtra("number",i+1);
                 startActivity(intent);
 
             }
@@ -123,33 +125,59 @@ public class ResultScreen extends AppCompatActivity {
                 int m = calendar.get(Calendar.MONTH) + 1;
                 String date = d+"/"+m+"/"+y;
                 interval = interval * 1;
-                db.updatePicture(id,true,date,interval);
+                db.updatePicture(id,false,date,interval);
                 Toast.makeText(ResultScreen.this, "Hard", Toast.LENGTH_SHORT).show();
                 Intent intent =new Intent(ResultScreen.this,MainActivity.class);
-                intent.putExtra("number",i+1);
+                //intent.putExtra("number",i);
                 startActivity(intent);
 
             }
         });
     }
 
-    private void getKeyword() {
-        WordsModel model = db.getCard(i);
-        keywordTxt.setText(model.getWord() + " , " + model.getLetter());
-        /*List<WordsModel> wordsModelArrayList = db.getAllCard();
+    private void checkInterval() {
+        List<WordsModel> wordsModelArrayList = db.getAllCard();
+        List<WordsModel> modelList = new ArrayList<>();
         Calendar calendar = Calendar.getInstance();
         int y = calendar.get(Calendar.YEAR);
         int d = calendar.get(Calendar.DAY_OF_MONTH);
         int m = calendar.get(Calendar.MONTH) + 1;
         String date = d+"/"+m+"/"+y;
+        int pred = calendar.get(Calendar.DAY_OF_MONTH)-1;
+        String pre = pred+"/"+m+"/"+y;
+
         for (int i = 0 ; i < wordsModelArrayList.size(); i++){
             WordsModel model = wordsModelArrayList.get(i);
             if(model.getTimestamp().equals(date)){
+                if (model.getInterval() == 1){
+                    i = model.getNo()+1;
+                }
+
+            }
+            else if(model.getTimestamp().equals(pre)){
                 if (!model.isSeen()){
-                    keywordTxt.setText(model.getNo() + ". " + model.getWord() + " , " + model.getLetter());
+                    modelList.add(model);
                 }
             }
-        }*/
+
+        }
+    }
+
+    private void getKeyword() {
+        //WordsModel model = db.getCard(i);
+        //keywordTxt.setText(model.getWord() + " , " + model.getLetter());
+
+        Calendar calendar = Calendar.getInstance();
+        int y = calendar.get(Calendar.YEAR);
+        int d = calendar.get(Calendar.DAY_OF_MONTH);
+        int m = calendar.get(Calendar.MONTH) + 1;
+        String date = d+"/"+m+"/"+y;
+      //  List<WordsModel> wordsModelArrayList = db.getAllCardInfo(date);
+        WordsModel model = db.getCurrentCardId(date);
+        i = model.getNo();
+        correctValue.setText("Correct Value: " + model.getLetter());
+        keywordTxt.setText(model.getWord());
+        //Toast.makeText(ResultScreen.this, "" + i, Toast.LENGTH_SHORT).show();
     }
 
 
@@ -177,11 +205,18 @@ public class ResultScreen extends AppCompatActivity {
 
     String word = "";
     private void matchLetter() {
-        List<WordsModel> wordsModels = db.getAllCard();
-        for (int i = 0 ; i < wordsModels.size(); i++){
-            WordsModel model = wordsModels.get(i);
-            if (model.getLetter().equals(letter)){
-                word = model.getLetter();
+        List<WordsModel> wordsModelArrayList = db.getAllCard();
+        Calendar calendar = Calendar.getInstance();
+        int y = calendar.get(Calendar.YEAR);
+        int d = calendar.get(Calendar.DAY_OF_MONTH);
+        int m = calendar.get(Calendar.MONTH) + 1;
+        String date = d+"/"+m+"/"+y;
+        for (int i = 0 ; i < wordsModelArrayList.size(); i++){
+            WordsModel model = wordsModelArrayList.get(i);
+            if (model.getTimestamp().equals(date)) {
+                if (model.getLetter().equals(letter)) {
+                    word = model.getLetter();
+                }
             }
         }
         if (word.equals(letter)){

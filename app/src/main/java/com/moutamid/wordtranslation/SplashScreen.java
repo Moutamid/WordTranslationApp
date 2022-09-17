@@ -24,6 +24,7 @@ public class SplashScreen extends AppCompatActivity {
     private SqlDb db;
     private boolean list = false;
     private SharedPreferencesManager manager;
+    private String status;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +37,12 @@ public class SplashScreen extends AppCompatActivity {
         homeTxt = findViewById(R.id.home);
         getDueNumber();
         manager = new SharedPreferencesManager(SplashScreen.this);
+        status = manager.retrieveString("status","");
+        if (status.equals("")){
+            reviewBtn.setEnabled(true);
+        }else {
+            reviewBtn.setEnabled(false);
+        }
         list = manager.retrieveBoolean("insert",false);
         if (!list) {
             AppInit.saveListInDb(SplashScreen.this);
@@ -45,7 +52,7 @@ public class SplashScreen extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent =new Intent(SplashScreen.this,MainActivity.class);
-                intent.putExtra("number",1);
+     //           intent.putExtra("number",1);
                 startActivity(intent);
                 finish();
             }

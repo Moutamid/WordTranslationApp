@@ -81,6 +81,23 @@ public class SqlDb extends SQLiteOpenHelper {
 	}
 
 	@SuppressLint("Range")
+	public WordsModel getCurrentCardId(String date){
+		String query = "SELECT * FROM " + TABLE_FLASH_CARD + " WHERE " +
+				COLUMN_TIMESTAMP + " = '" + date + "'" + " AND " +
+				COLUMN_INTERVAL + " = '" + 1 + "'" ;
+		SQLiteDatabase db = this.getReadableDatabase();
+		Cursor res = db.rawQuery(query, null);
+		WordsModel model = null;
+		if(res!=null&&res.moveToFirst()) {
+			model = new WordsModel();
+			model.setNo(res.getColumnIndex(COLUMN_PK));
+			model.setWord(res.getString(res.getColumnIndex(COLUMN_WORD)));
+			model.setLetter(res.getString(res.getColumnIndex(COLUMN_LETTER)));
+		}
+		return model;
+	}
+
+	@SuppressLint("Range")
 	public WordsModel getCard(int no){
 		String query = "SELECT * FROM " + TABLE_FLASH_CARD + " WHERE " +
 				COLUMN_PK + " = '" + no + "'";
@@ -101,6 +118,32 @@ public class SqlDb extends SQLiteOpenHelper {
 
 		db = this.getWDB();
 		Cursor c = db.rawQuery("SELECT * FROM "+TABLE_FLASH_CARD, null);
+
+		if(c.moveToFirst()){
+			do {
+				WordsModel no = new WordsModel();
+				no.setNo(Integer.parseInt(c.getString(0)));
+				no.setWord(c.getString(1));
+				no.setLetter(c.getString(2));
+				no.setTimestamp(c.getString(3));
+				no.setSeen(Boolean.parseBoolean(c.getString(4)));
+				no.setInterval(Integer.parseInt(c.getString(5)));
+				list.add(no);
+
+			} while (c.moveToNext());
+		}
+		db.close();
+		return list;
+	}
+
+	public List<WordsModel> getAllCardInfo(String date){
+		List<WordsModel> list = new ArrayList<WordsModel>();
+
+		db = this.getWDB();
+		String query = "SELECT * FROM " + TABLE_FLASH_CARD + " WHERE " +
+				COLUMN_TIMESTAMP + " = '" + date + "'" + " AND " +
+				COLUMN_INTERVAL + " = '" + 1 + "'";
+		Cursor c = db.rawQuery(query, null);
 
 		if(c.moveToFirst()){
 			do {
